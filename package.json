@@ -1,0 +1,57 @@
+{
+  "name": "enchanted-forest-3d",
+  "version": "1.0.0",
+  "description": "A dynamic 3D virtual forest environment featuring day-night cycle, animated wildlife, and atmospheric effects",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "python3 -m http.server 8000",
+    "dev": "live-server --port=8000 --open=/index.html"
+  },
+  "keywords": [
+    "threejs",
+    "3d",
+    "webgl",
+    "computer-graphics",
+    "virtual-environment",
+    "day-night-cycle",
+    "forest",
+    "animation",
+    "webgl",
+    "javascript",
+    "interactive-3d"
+  ],
+  "author": {
+    "name": "Computer Graphics Assignment",
+    "email": "assignment@university.edu"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/enchanted-forest-3d.git"
+  },
+  "bugs": {
+    "url": "https://github.com/username/enchanted-forest-3d/issues"
+  },
+  "homepage": "https://github.com/username/enchanted-forest-3d#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "three": "^0.160.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "files": [
+    "index.html",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ]
+}

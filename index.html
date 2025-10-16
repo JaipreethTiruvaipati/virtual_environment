@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enchanted Forest Day/Night Cycle</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 10px 15px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">
+        <h1>Enchanted Forest</h1>
+        <p>Featuring a full day-night cycle with sun, moon, and stars.</p>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { Reflector } from 'three/addons/objects/Reflector.js';
+
+        // --- CORE SETUP ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 8, 35);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        document.body.appendChild(renderer.domElement);
+
+        // --- CAMERA CONTROLS ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 3, 0);
+
+        // --- LIGHTING & ATMOSPHERE ---
+        const nightBackgroundColor = new THREE.Color(0x0a0a1a);
+        const dayBackgroundColor = new THREE.Color(0x3d5d59);
+        scene.background = nightBackgroundColor.clone();
+        scene.fog = new THREE.Fog(scene.background, 30, 150);
+
+        // Sun
+        const sunLight = new THREE.DirectionalLight(0xffeeb1, 0);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 4096;
+        sunLight.shadow.mapSize.height = 4096;
+        sunLight.shadow.camera.far = 150;
+        sunLight.shadow.camera.left = -80;
+        sunLight.shadow.camera.right = 80;
+        sunLight.shadow.camera.top = 80;
+        sunLight.shadow.camera.bottom = -80;
+        scene.add(sunLight);
+        
+        const sunSphere = new THREE.Mesh(new THREE.SphereGeometry(10, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffeeb1, fog: false }));
+        scene.add(sunSphere);
+
+        // Moon
+        const moonLight = new THREE.DirectionalLight(0xaaaaee, 0);
+        // Moon doesn't need to cast shadows to save performance
+        scene.add(moonLight);
+        
+        const moonSphere = new THREE.Mesh(new THREE.SphereGeometry(5, 32, 32), new THREE.MeshBasicMaterial({ color: 0xddddff, fog: false }));
+        scene.add(moonSphere);
+
+        // Ambient Light
+        const ambientLight = new THREE.AmbientLight(0x5A7D6A, 0.05);
+        scene.add(ambientLight);
+        
+        // Stars
+        const starGeometry = new THREE.BufferGeometry();
+        const starPositions = [];
+        for (let i = 0; i < 10000; i++) {
+            const vertex = new THREE.Vector3();
+            vertex.x = Math.random() * 2 - 1;
+            vertex.y = Math.random() * 2 - 1;
+            vertex.z = Math.random() * 2 - 1;
+            vertex.normalize();
+            vertex.multiplyScalar(Math.random() * 10 + 400); // radius
+            starPositions.push(vertex.x, vertex.y, vertex.z);
+        }
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.7, transparent: true, opacity: 0 });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+
+        // Dust particles in the air
+        const particleCount = 500;
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            particlePositions[i * 3] = (Math.random() - 0.5) * 100;
+            particlePositions[i * 3 + 1] = Math.random() * 20;
+            particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+        }
+        const particleGeometry = new THREE.BufferGeometry();
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMaterial = new THREE.PointsMaterial({ color: 0xFFD890, size: 0.08, transparent: true, opacity: 0 });
+        const dustMotes = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(dustMotes);
+
+        // --- TERRAIN, RIVER, TREES, ANIMALS ---
+        const groundGeometry = new THREE.PlaneGeometry(200, 200);
+        function createGroundTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#3E2723';
+            context.fillRect(0, 0, 256, 256);
+            for (let i = 0; i < 10000; i++) {
+                const x = Math.random() * 256;
+                const y = Math.random() * 256;
+                const radius = Math.random() * 1.5;
+                const color = Math.random() > 0.6 ? `rgba(74, 124, 59, ${Math.random() * 0.5})` : `rgba(255, 165, 0, ${Math.random() * 0.2})`;
+                context.fillStyle = color;
+                context.beginPath();
+                context.arc(x, y, radius, 0, Math.PI * 2);
+                context.fill();
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(50, 50);
+            return texture;
+        }
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            map: createGroundTexture(),
+            roughness: 0.95, metalness: 0.1
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+        
+        const riverGeometry = new THREE.PlaneGeometry(20, 200);
+        const river = new Reflector(riverGeometry, {
+            clipBias: 0.003,
+            textureWidth: window.innerWidth * window.devicePixelRatio,
+            textureHeight: window.innerHeight * window.devicePixelRatio,
+            color: 0x668899,
+        });
+        river.rotation.x = -Math.PI / 2;
+        river.position.y = 0.05;
+        scene.add(river);
+
+        const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x6D4C41, roughness: 0.9 });
+        function createPineTree(height, radius) {
+            const tree = new THREE.Group();
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.3, radius * 0.5, height, 8), trunkMaterial);
+            trunk.castShadow = true;
+            tree.add(trunk);
+            const leavesMaterial = new THREE.MeshStandardMaterial({ color: 0x2D5016, roughness: 0.8 });
+            let canopyHeight = height * 0.8;
+            let currentY = height * 0.2;
+            while(canopyHeight > 0.5) {
+                const canopy = new THREE.Mesh(new THREE.ConeGeometry(canopyHeight * 0.5, canopyHeight, 8), leavesMaterial);
+                canopy.position.y = currentY + canopyHeight * 0.5;
+                canopy.castShadow = true;
+                tree.add(canopy);
+                currentY += canopyHeight * 0.2;
+                canopyHeight *= 0.7;
+            }
+            return tree;
+        }
+        for (let i = 0; i < 150; i++) {
+            const x = (Math.random() - 0.5) * 180;
+            const z = (Math.random() - 0.5) * 180;
+            if (Math.abs(x) < 12) continue;
+            const height = Math.random() * 15 + 10;
+            const radius = height / 20;
+            const tree = createPineTree(height, radius);
+            tree.position.set(x, height / 2, z);
+            scene.add(tree);
+        }
+        const rockMaterial = new THREE.MeshStandardMaterial({ color: 0x5a5a5a, roughness: 0.8 });
+        for(let i = 0; i < 30; i++) {
+            const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(Math.random() * 1.5 + 0.5, 0), rockMaterial);
+             const x = (Math.random() - 0.5) * 180;
+            if (Math.abs(x) < 12) continue;
+            rock.position.set(x, rock.geometry.parameters.radius / 2, (Math.random() - 0.5) * 180);
+            rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+            rock.castShadow = true;
+            scene.add(rock);
+        }
+
+        const animals = [];
+        function createDeer() {
+            const deer = new THREE.Group();
+            const bodyMat = new THREE.MeshStandardMaterial({color: 0xab6d3f});
+            const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1, 0.8), bodyMat);
+            body.position.y = 1;
+            body.castShadow = true;
+            deer.add(body);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.6), bodyMat);
+            head.position.set(1.2, 1.5, 0);
+            head.castShadow = true;
+            deer.add(head);
+            const legMat = new THREE.MeshStandardMaterial({color: 0x7a4c2c});
+            for(let i=0; i<4; i++){
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1), legMat);
+                leg.position.set( (i < 2 ? 0.8 : -0.8), 0.5, (i % 2 === 0 ? 0.3 : -0.3) );
+                leg.castShadow = true;
+                deer.add(leg);
+            }
+            return deer;
+        }
+        function createRabbit() {
+            const rabbit = new THREE.Group();
+            const bodyMat = new THREE.MeshStandardMaterial({color: 0xbababa});
+            const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.5, 4, 8), bodyMat);
+            body.position.y = 0.4;
+            body.castShadow = true;
+            rabbit.add(body);
+            return rabbit;
+        }
+        function addAnimal(type, count) {
+            let created = 0;
+            while(created < count){
+                const mesh = type === 'deer' ? createDeer() : createRabbit();
+                const x = (Math.random() - 0.5) * 150;
+                if (Math.abs(x) < 15) continue;
+                mesh.position.set(x, 0, (Math.random() - 0.5) * 150);
+                scene.add(mesh);
+                animals.push({ mesh, speed: type === 'deer' ? 0.01 + Math.random() * 0.01 : 0.02 + Math.random() * 0.02, turnTimer: Math.random() * 5, type, hopTime: 0, });
+                created++;
+            }
+        }
+        addAnimal('deer', 5);
+        addAnimal('rabbit', 8);
+
+        const birds = [];
+        function createBird() {
+            const bird = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.5, 8), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+            const flightRadius = Math.random() * 30 + 20;
+            const flightSpeed = Math.random() * 0.3 + 0.2;
+            const flightHeight = Math.random() * 15 + 15;
+            const phase = Math.random() * Math.PI * 2;
+            birds.push({ mesh: bird, radius: flightRadius, speed: flightSpeed, height: flightHeight, phase: phase });
+            scene.add(bird);
+        }
+        for (let i = 0; i < 7; i++) createBird();
+
+        // --- ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+            const deltaTime = clock.getDelta();
+
+            // Animate Day-Night Cycle
+            const sunAngle = (elapsedTime / 40) * Math.PI; // 40 second cycle
+            
+            // Sun animation
+            sunLight.position.set(Math.cos(sunAngle) * 100, Math.sin(sunAngle) * 100, 30);
+            sunSphere.position.copy(sunLight.position);
+            const sunIntensity = Math.max(0, Math.sin(sunAngle));
+            sunLight.intensity = sunIntensity * 5.0; // Brighter sun
+            
+            // Moon animation (opposite side)
+            const moonAngle = sunAngle + Math.PI;
+            moonLight.position.set(Math.cos(moonAngle) * 100, Math.sin(moonAngle) * 100, 30);
+            moonSphere.position.copy(moonLight.position);
+            const moonIntensity = Math.max(0, Math.sin(moonAngle));
+            moonLight.intensity = moonIntensity * 1.0; // Increased moon brightness
+
+            // Blend lighting and background
+            ambientLight.intensity = sunIntensity * 0.6 + moonIntensity * 0.3 + 0.1; // Increased ambient light at night
+            particleMaterial.opacity = sunIntensity * 0.7;
+            starMaterial.opacity = moonIntensity * 0.8;
+            scene.background.lerpColors(nightBackgroundColor, dayBackgroundColor, sunIntensity);
+            scene.fog.color.copy(scene.background);
+            
+            // Animal Animation
+            animals.forEach(animal => {
+                animal.turnTimer -= deltaTime;
+                if(animal.turnTimer <= 0) {
+                    animal.mesh.rotation.y = (Math.random() - 0.5) * Math.PI;
+                    animal.turnTimer = Math.random() * 5 + 3;
+                }
+                animal.mesh.translateZ(animal.speed);
+                if (animal.type === 'rabbit') {
+                    animal.hopTime += deltaTime * 15;
+                    animal.mesh.position.y = Math.abs(Math.sin(animal.hopTime)) * 0.3;
+                }
+                if(Math.abs(animal.mesh.position.x) > 95 || Math.abs(animal.mesh.position.z) > 95){
+                    animal.mesh.rotation.y += Math.PI * 0.8;
+                }
+                if(Math.abs(animal.mesh.position.x) < 12) {
+                     animal.mesh.rotation.y += Math.PI * 0.8;
+                }
+            });
+
+            // Bird animation
+            birds.forEach(b => {
+                const angle = elapsedTime * b.speed + b.phase;
+                b.mesh.position.set(Math.cos(angle) * b.radius, b.height + Math.sin(angle * 2) * 2, Math.sin(angle) * b.radius);
+                b.mesh.lookAt(Math.cos(angle + 0.01) * b.radius, b.height + Math.sin((angle + 0.01) * 2) * 2, Math.sin(angle + 0.01) * b.radius);
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- RESPONSIVENESS ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
