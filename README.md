@@ -150,8 +150,13 @@ This project demonstrates practical application of computer graphics concepts:
 - VR/AR support for immersive experience
 - Multiplayer support for shared exploration
 - Advanced AI for more complex animal behaviors
-## video 
+## 📹 Video Demo
 
+A video demonstration of the 3D forest environment is available in the repository showing:
+- Day-night cycle transitions
+- Animated wildlife behavior
+- Interactive camera controls
+- Atmospheric effects and lighting
 
 ## 👨‍💻 Author
 
