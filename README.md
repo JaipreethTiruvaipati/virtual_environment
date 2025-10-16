@@ -150,10 +150,8 @@ This project demonstrates practical application of computer graphics concepts:
 - VR/AR support for immersive experience
 - Multiplayer support for shared exploration
 - Advanced AI for more complex animal behaviors
+## video 
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍💻 Author
 
