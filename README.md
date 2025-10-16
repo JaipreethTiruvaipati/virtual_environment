@@ -151,9 +151,9 @@ This project demonstrates practical application of computer graphics concepts:
 - Multiplayer support for shared exploration
 - Advanced AI for more complex animal behaviors
 
-## 📝 License
+## Video
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
 ## 👨‍💻 Author
 
